@@ -45,7 +45,7 @@ Item {
 
   Flickable {
     anchors.fill: parent
-    contentWidth: width
+    contentWidth: parent.width
     contentHeight: col.implicitHeight + 32
     clip: true
     boundsBehavior: Flickable.StopAtBounds
@@ -65,176 +65,240 @@ Item {
 
       Repeater {
         model: Omarchy.monitors
-        delegate: Rectangle {
-          id: card
+        delegate: MonitorCard {
           required property var modelData
           width: col.width
-          height: cardCol.implicitHeight + 32
-          radius: Style.cornerRadius > 0 ? Math.min(20, Style.cornerRadius) : 6
-          color: Util.alpha(Color.foreground, 0.04)
-          border.width: 1
-          border.color: Util.alpha(Color.foreground, 0.07)
+          commitFn: root.commit
+        }
+      }
+    }
+  }
+}
 
-          readonly property bool enabledHere: SettingsStore.monitorValue(modelData, "disabled", false) === false
+// Collapsible monitor card component
+Component {
+  id: MonitorCard
+  Rectangle {
+    id: card
+    required property var modelData
+    required property var commitFn
+    width: col.width
+    height: content.height + 16
+    radius: Style.cornerRadius > 0 ? Math.min(20, Style.cornerRadius) : 6
+    color: Util.alpha(Color.foreground, 0.04)
+    border.width: 1
+    border.color: Util.alpha(Color.foreground, 0.07)
 
-          Column {
-            id: cardCol
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: 20
-            anchors.rightMargin: 20
+    readonly property bool enabledHere: SettingsStore.monitorValue(modelData, "disabled", false) === false
+
+    property bool expanded: true
+
+    Column {
+      id: content
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.leftMargin: 20
+      anchors.rightMargin: 20
+      spacing: 14
+
+      // Header row with name and expand/collapse
+      Row {
+        width: parent.width
+        spacing: 12
+
+        Column {
+          width: parent.width - expandBtn.width - resetRect.width - 80
+          spacing: 2
+          Text {
+            text: card.modelData.name
+            font.family: Style.font.family
+            font.pixelSize: Style.font.title
+            font.weight: Font.DemiBold
+            color: Color.foreground
+          }
+          Text {
+            text: card.modelData.description + "  ·  " + card.modelData.width + "×" + card.modelData.height
+            font.family: Style.font.family
+            font.pixelSize: Style.font.bodySmall
+            color: Color.muted
+          }
+        }
+
+        Button {
+          id: expandBtn
+          width: 32
+          height: 26
+          anchors.verticalCenter: parent.verticalCenter
+          flat: true
+          text: card.expanded ? "▲" : "▼"
+          font.family: Style.font.family
+          font.pixelSize: Style.font.bodySmall
+          color: Color.muted
+          onClicked: card.expanded = !card.expanded
+        }
+
+        Rectangle {
+          id: resetRect
+          width: resetText.implicitWidth + 18
+          height: 26
+          radius: Style.cornerRadius > 0 ? Math.min(12, Math.round(Style.cornerRadius * 0.5)) : 4
+          visible: SettingsStore.isMonitorManaged(card.modelData.name)
+          anchors.verticalCenter: parent.verticalCenter
+          color: resetMouse.containsMouse ? Util.alpha(Color.foreground, 0.12) : Util.alpha(Color.foreground, 0.06)
+          Text {
+            id: resetText
+            anchors.centerIn: parent
+            text: "Reset"
+            font.family: Style.font.family
+            font.pixelSize: Style.font.bodySmall
+            color: Color.foreground
+          }
+          MouseArea {
+            id: resetMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: SettingsStore.resetMonitor(card.modelData.name)
+          }
+        }
+      }
+
+      // Enable switch row
+      Row {
+        width: parent.width
+        spacing: 12
+        SwitchControl {
+          id: enableSwitch
+          checked: card.enabledHere
+          onToggled: card.commitFn(card.modelData, { enabled: !card.enabledHere })
+        }
+        Text {
+          text: "Enabled"
+          anchors.verticalCenter: parent.verticalCenter
+          font.family: Style.font.family
+          font.pixelSize: Style.font.body
+          color: Color.foreground
+        }
+      }
+
+      // Collapsible content
+      Item {
+        id: collapsibleContent
+        width: parent.width
+        height: card.expanded ? contentHeight : 0
+        clip: true
+        visible: card.expanded && card.enabledHere
+
+        Column {
+          id: innerCol
+          anchors.left: parent.left
+          anchors.right: parent.right
+          spacing: 14
+
+          property real contentHeight: innerCol.implicitHeight
+
+          Row {
+            visible: card.enabledHere
+            width: parent.width
             spacing: 14
 
-            Row {
-              width: parent.width
-              spacing: 12
-
-              Column {
-                width: parent.width - enableSwitch.width - 60
-                spacing: 2
-                Text {
-                  text: card.modelData.name
-                  font.family: Style.font.family
-                  font.pixelSize: Style.font.title
-                  font.weight: Font.DemiBold
-                  color: Color.foreground
-                }
-                Text {
-                  text: card.modelData.description + "  ·  " + card.modelData.width + "×" + card.modelData.height
-                  font.family: Style.font.family
-                  font.pixelSize: Style.font.bodySmall
-                  color: Color.muted
-                }
-              }
-
-              SwitchControl {
-                id: enableSwitch
-                checked: card.enabledHere
-                anchors.verticalCenter: parent.verticalCenter
-                onToggled: root.commit(card.modelData, { enabled: !card.enabledHere })
-              }
-
-              Rectangle {
-                width: resetText.implicitWidth + 18
-                height: 26
-                radius: Style.cornerRadius > 0 ? Math.min(12, Math.round(Style.cornerRadius * 0.5)) : 4
-                visible: SettingsStore.isMonitorManaged(card.modelData.name)
-                anchors.verticalCenter: parent.verticalCenter
-                color: resetMouse.containsMouse ? Util.alpha(Color.foreground, 0.12) : Util.alpha(Color.foreground, 0.06)
-                Text {
-                  id: resetText
-                  anchors.centerIn: parent
-                  text: "Reset"
-                  font.family: Style.font.family
-                  font.pixelSize: Style.font.bodySmall
-                  color: Color.foreground
-                }
-                MouseArea {
-                  id: resetMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: SettingsStore.resetMonitor(card.modelData.name)
-                }
-              }
+            Text {
+              text: "Mode"
+              width: 64
+              anchors.verticalCenter: parent.verticalCenter
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+              color: Color.muted
             }
-
-            Row {
-              visible: card.enabledHere
-              width: parent.width
-              spacing: 14
-
-              Text {
-                text: "Mode"
-                width: 64
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: Style.font.family
-                font.pixelSize: Style.font.body
-                color: Color.muted
-              }
-              SegmentedControl {
-                options: root.modeOptions(card.modelData)
-                value: root.currentMode(card.modelData)
-                onChanged: function (v) { root.commit(card.modelData, { mode: v }) }
-              }
+            SegmentedControl {
+              options: root.modeOptions(card.modelData)
+              value: root.currentMode(card.modelData)
+              onChanged: function (v) { card.commitFn(card.modelData, { mode: v }) }
             }
+          }
 
-            Row {
-              visible: card.enabledHere
-              width: parent.width
-              spacing: 14
+          Row {
+            visible: card.enabledHere
+            width: parent.width
+            spacing: 14
 
-              Text {
-                text: "Scale"
-                width: 64
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: Style.font.family
-                font.pixelSize: Style.font.body
-                color: Color.muted
-              }
-              SegmentedControl {
-                options: [
-                  { value: 0.75, label: "0.75×" },
-                  { value: 1, label: "1×" },
-                  { value: 1.25, label: "1.25×" },
-                  { value: 1.5, label: "1.5×" },
-                  { value: 2, label: "2×" }
-                ]
-                value: SettingsStore.monitorValue(card.modelData, "scale", 1)
-                onChanged: function (v) { root.commit(card.modelData, { scale: Number(v) }) }
-              }
+            Text {
+              text: "Scale"
+              width: 64
+              anchors.verticalCenter: parent.verticalCenter
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+              color: Color.muted
             }
+            SegmentedControl {
+              options: [
+                { value: 0.75, label: "0.75×" },
+                { value: 1, label: "1×" },
+                { value: 1.25, label: "1.25×" },
+                { value: 1.5, label: "1.5×" },
+                { value: 2, label: "2×" }
+              ]
+              value: SettingsStore.monitorValue(card.modelData, "scale", 1)
+              onChanged: function (v) { card.commitFn(card.modelData, { scale: Number(v) }) }
+            }
+          }
 
-            Row {
-              visible: card.enabledHere
-              width: parent.width
-              spacing: 14
+          Row {
+            visible: card.enabledHere
+            width: parent.width
+            spacing: 14
 
-              Text {
-                text: "Position"
-                width: 64
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: Style.font.family
-                font.pixelSize: Style.font.body
-                color: Color.muted
-              }
-              Text {
-                text: "X"
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: Style.font.family
-                font.pixelSize: Style.font.bodySmall
-                color: Color.muted
-              }
-              ValueSlider {
-                width: 150
-                minimum: -7680
-                maximum: 7680
-                step: 1
-                integer: true
-                value: SettingsStore.monitorValue(card.modelData, "x", 0)
-                onMoved: function (v) { root.commit(card.modelData, { x: Math.round(v) }) }
-              }
-              Text {
-                text: "Y"
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: Style.font.family
-                font.pixelSize: Style.font.bodySmall
-                color: Color.muted
-              }
-              ValueSlider {
-                width: 150
-                minimum: -4320
-                maximum: 4320
-                step: 1
-                integer: true
-                value: SettingsStore.monitorValue(card.modelData, "y", 0)
-                onMoved: function (v) { root.commit(card.modelData, { y: Math.round(v) }) }
-              }
+            Text {
+              text: "Position"
+              width: 64
+              anchors.verticalCenter: parent.verticalCenter
+              font.family: Style.font.family
+              font.pixelSize: Style.font.body
+              color: Color.muted
+            }
+            Text {
+              text: "X"
+              anchors.verticalCenter: parent.verticalCenter
+              font.family: Style.font.family
+              font.pixelSize: Style.font.bodySmall
+              color: Color.muted
+            }
+            ValueSlider {
+              width: 150
+              minimum: -7680
+              maximum: 7680
+              step: 1
+              integer: true
+              value: SettingsStore.monitorValue(card.modelData, "x", 0)
+              onMoved: function (v) { card.commitFn(card.modelData, { x: Math.round(v) }) }
+            }
+            Text {
+              text: "Y"
+              anchors.verticalCenter: parent.verticalCenter
+              font.family: Style.font.family
+              font.pixelSize: Style.font.bodySmall
+              color: Color.muted
+            }
+            ValueSlider {
+              width: 150
+              minimum: -4320
+              maximum: 4320
+              step: 1
+              integer: true
+              value: SettingsStore.monitorValue(card.modelData, "y", 0)
+              onMoved: function (v) { card.commitFn(card.modelData, { y: Math.round(v) }) }
             }
           }
         }
       }
+    }
+
+    Behavior on height {
+      NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
+
+    function commit(m, changes) {
+      commitFn(m, changes)
     }
   }
 }

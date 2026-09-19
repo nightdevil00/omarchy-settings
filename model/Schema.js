@@ -221,9 +221,9 @@ var settings = [
       { value: "none", label: "Disabled" }
     ] },
 
-  { id: "input.accel_profile", page: "input", group: "Pointer",
+  { id: "input.mouse.accel_profile", page: "input", group: "Mouse",
     label: "Acceleration profile", desc: "Adaptive accelerates with speed; flat is linear.",
-    type: "enum", hypr: "input:accel_profile", lua: ["input", "accel_profile"],
+    type: "enum", hypr: null, lua: ["input", "mouse", "accel_profile"],
     default: "adaptive",
     options: [
       { value: "adaptive", label: "Adaptive" },
@@ -231,31 +231,30 @@ var settings = [
       { value: "",         label: "Default" }
     ] },
 
-  { id: "input.sensitivity", page: "input", group: "Pointer",
+  { id: "input.mouse.sensitivity", page: "input", group: "Mouse",
     label: "Sensitivity", desc: "Pointer speed. 0 is unchanged.",
-    type: "float", hypr: "input:sensitivity", lua: ["input", "sensitivity"],
+    type: "float", hypr: null, lua: ["input", "mouse", "sensitivity"],
     default: 0, min: -1, max: 1, step: 0.01 },
 
-  { id: "input.follow_mouse", page: "input", group: "Pointer",
-    label: "Follow mouse", desc: "Focus follows the cursor.",
-    type: "enum", hypr: "input:follow_mouse", lua: ["input", "follow_mouse"],
-    default: "1",
+  { id: "input.mouse.natural_scroll", page: "input", group: "Mouse",
+    label: "Natural scroll", desc: "Scroll content with the gesture, not against it.",
+    type: "bool", hypr: null, lua: ["input", "mouse", "natural_scroll"],
+    default: false },
+
+  { id: "input.touchpad.accel_profile", page: "input", group: "Touchpad",
+    label: "Acceleration profile", desc: "Adaptive accelerates with speed; flat is linear.",
+    type: "enum", hypr: null, lua: ["input", "touchpad", "accel_profile"],
+    default: "adaptive",
     options: [
-      { value: "0", label: "Disabled" },
-      { value: "1", label: "Full" },
-      { value: "2", label: "Loose" },
-      { value: "3", label: "No follow" }
+      { value: "adaptive", label: "Adaptive" },
+      { value: "flat",     label: "Flat" },
+      { value: "",         label: "Default" }
     ] },
 
-  { id: "input.left_handed", page: "input", group: "Pointer",
-    label: "Left handed", desc: "Swap the primary and secondary mouse buttons.",
-    type: "bool", hypr: "input:left_handed", lua: ["input", "left_handed"],
-    default: false },
-
-  { id: "input.natural_scroll", page: "input", group: "Pointer",
-    label: "Natural scroll", desc: "Scroll content with the gesture, not against it.",
-    type: "bool", hypr: "input:natural_scroll", lua: ["input", "natural_scroll"],
-    default: false },
+  { id: "input.touchpad.sensitivity", page: "input", group: "Touchpad",
+    label: "Sensitivity", desc: "Pointer speed. 0 is unchanged.",
+    type: "float", hypr: null, lua: ["input", "touchpad", "sensitivity"],
+    default: 0, min: -1, max: 1, step: 0.01 },
 
   { id: "input.touchpad.natural_scroll", page: "input", group: "Touchpad",
     label: "Natural scroll", desc: "Reverse the touchpad scroll direction.",
@@ -281,6 +280,42 @@ var settings = [
     label: "Scroll factor", desc: "Touchpad scroll speed multiplier.",
     type: "float", hypr: "input:touchpad:scroll_factor", lua: ["input", "touchpad", "scroll_factor"],
     default: 0.4, min: 0, max: 2, step: 0.05 },
+
+  { id: "input.trackpoint.accel_profile", page: "input", group: "Trackpoint",
+    label: "Acceleration profile", desc: "Adaptive accelerates with speed; flat is linear.",
+    type: "enum", hypr: null, lua: ["input", "trackpoint", "accel_profile"],
+    default: "adaptive",
+    options: [
+      { value: "adaptive", label: "Adaptive" },
+      { value: "flat",     label: "Flat" },
+      { value: "",         label: "Default" }
+    ] },
+
+  { id: "input.trackpoint.sensitivity", page: "input", group: "Trackpoint",
+    label: "Sensitivity", desc: "Pointer speed. 0 is unchanged.",
+    type: "float", hypr: null, lua: ["input", "trackpoint", "sensitivity"],
+    default: 0, min: -1, max: 1, step: 0.01 },
+
+  { id: "input.trackpoint.natural_scroll", page: "input", group: "Trackpoint",
+    label: "Natural scroll", desc: "Scroll content with the gesture, not against it.",
+    type: "bool", hypr: null, lua: ["input", "trackpoint", "natural_scroll"],
+    default: false },
+
+  { id: "input.follow_mouse", page: "input", group: "Mouse",
+    label: "Follow mouse", desc: "Focus follows the cursor.",
+    type: "enum", hypr: "input:follow_mouse", lua: ["input", "follow_mouse"],
+    default: "1",
+    options: [
+      { value: "0", label: "Disabled" },
+      { value: "1", label: "Full" },
+      { value: "2", label: "Loose" },
+      { value: "3", label: "No follow" }
+    ] },
+
+  { id: "input.left_handed", page: "input", group: "Mouse",
+    label: "Left handed", desc: "Swap the primary and secondary mouse buttons.",
+    type: "bool", hypr: "input:left_handed", lua: ["input", "left_handed"],
+    default: false },
 
   { id: "gesture.workspace_swipe", page: "input", group: "Gestures",
     label: "Workspace swipe", desc: "Swipe with 3 or 4 fingers to change workspaces.",
