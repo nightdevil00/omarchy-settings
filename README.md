@@ -1,46 +1,59 @@
 # Omarchy Settings
 
-A standalone Quickshell app that configures the parts of Omarchy a user is
-likely to touch: Hyprland behaviour, monitors, the shell bar, plugins, idle
-timing, night light, updates, and a read-only system summary.
+A graphical settings hub for Omarchy, shipped as a **native shell plugin**: a
+gear on the bar and a panel window. It covers the parts a user is likely to
+touch — Hyprland behaviour, monitors, the shell bar and plugins, idle timing,
+night light, updates, and a read-only system summary.
 
-It is not a shell plugin. It runs as its own Quickshell configuration
-(`omarchy-settings`), so it can open, close, and crash without taking the
-desktop shell with it. The one thing it keeps in common with the shell is the
-design language, which it borrows from the shell's own `qs.Commons` tokens.
+Because it is a plugin, it runs inside the Omarchy shell process, uses the same
+`qs.Commons` design tokens as every other panel, hot-reloads when its files
+change, and needs no root to install.
 
 ```
-~/.local/bin/omarchy-settings        →  qs -n -c omarchy-settings
+bar gear ──► omarchy-shell shell toggle nightdevil00.omarchy-settings '{}' ──► panel
 ```
 
 ## Install
 
-Quickshell discovers configs as `<xdg>/quickshell/<name>/shell.qml`, so the
-intended install is a clone at `~/.config/quickshell/omarchy-settings`:
+With the Omarchy CLI (recommended):
+
+```sh
+omarchy plugin add https://github.com/nightdevil00/omarchy-settings.git --enable
+```
+
+Or from a checkout:
 
 ```sh
 git clone https://github.com/nightdevil00/omarchy-settings.git \
-  ~/.config/quickshell/omarchy-settings
-cd ~/.config/quickshell/omarchy-settings
-./setup.sh
+  ~/.config/omarchy/plugins/nightdevil00.omarchy-settings
+~/.config/omarchy/plugins/nightdevil00.omarchy-settings/install.sh
 ```
 
-`setup.sh` links `Ui/` and `Commons/` from the Omarchy shell, where the design
-tokens live, and installs the launcher. Those two are not committed because
-they are absolute links into `$OMARCHY_PATH`.
+`install.sh` copies the checkout into the user plugin directory (if it is not
+already there), rescans, and enables the plugin with its gear placed just after
+the `omarchy.indicators` cluster on the center of the bar. If the gear does not
+appear immediately, run `omarchy restart shell`.
 
-## Running it
+No `sudo` is involved: plugins load from `~/.config/omarchy/plugins`, which the
+shell watches. Removing is `omarchy plugin remove nightdevil00.omarchy-settings`.
 
-- Launcher: `~/.local/bin/omarchy-settings` (a thin `exec qs -n -c omarchy-settings`).
-- Menu: a **Settings** entry is appended to the Omarchy menu in
-  `~/.config/omarchy/extensions/omarchy-menu.jsonc`. The menu watches that file,
-  so edits apply without a restart.
-- Directly: `qs -n -c omarchy-settings` from a terminal.
+## Using it
 
-The app itself is the config rooted at `~/.config/quickshell/omarchy-settings`.
-`Ui/` and `Commons/` are symlinks to `/usr/share/omarchy/shell/{Ui,Commons}` so
-`import qs.Ui` / `import qs.Commons` resolve inside this config the same way
-they do inside the shell.
+- **Bar gear** — click to open the panel. `Esc` or the window close button
+  closes it; the shell tracks the open state so `toggle` stays correct.
+- **CLI / keybind** — `omarchy-shell shell toggle nightdevil00.omarchy-settings '{}'`
+  (or `summon` / `hide`).
+- **Menu** — add an action entry to
+  `~/.config/omarchy/extensions/omarchy-menu.jsonc`:
+
+  ```jsonc
+  "settings": {
+    "icon": "󰒓",
+    "label": "Settings",
+    "description": "Open the Omarchy settings panel",
+    "action": "omarchy-shell shell toggle nightdevil00.omarchy-settings '{}'"
+  }
+  ```
 
 ## How it works
 
@@ -62,7 +75,9 @@ Three models, one loop.
 
 - `SettingsStore` reads every Hyprland option declared in the schema with a
   single batched `hyprctl -j getoption <name>` call. The JSON answer's
-  `bool`/`int`/`float`/`str` field becomes the effective value.
+  `bool`/`int`/`float`/`str` field becomes the effective value; vec4 options
+  such as `general:gaps_in` answer as a `css` string and are read from its
+  first component.
 - `Omarchy` (the singleton) reads everything that is not a Hyprland option:
   themes and fonts (`omarchy theme/font list|current`), monitors
   (`hyprctl -j monitors all`), plugins (`omarchy plugin list --json`), the bar
@@ -134,7 +149,7 @@ search index.
   search field. Typing filters pages and settings; results come from
   `Schema.matchingSettings`.
 - **Keyboard** — Up/Down walk the focus chain, Tab moves between controls,
-  Enter/Space activate. Escape quits.
+  Enter/Space activate. Escape closes the panel.
 - **Generic pages** (`appearance`, `window`, `motion`, `input`) are rendered
   from the schema by `GenericPage` + `SettingRow`, using `SwitchControl`,
   `SegmentedControl`, and `ValueSlider`.
@@ -196,46 +211,10 @@ ANSI colour stripped, in a read-only monospace panel, plus a **Refresh info**
 button. Nothing here is editable; it is the app's answer to "what am I
 running?"
 
-## Called from the shell
-
-The settings app is reachable three ways: as a command, from the Omarchy
-menu, and from a gear in the bar's indicator cluster.
-
-```sh
-omarchy-settings                 # launch or focus the app
-omarchy menu summon settings     # via the Omarchy menu entry
-```
-
-Clicking the gear also runs `omarchy-settings`.
-
-### The omarchy.indicators gear
-
-`omarchy.indicators` is a first-party bar widget. It loads each icon as
-`<shell>/plugins/bar/indicators/<Id>.qml` and shows the ones named in its
-`items` setting, so both halves of the integration are external to this app:
-
-- `integration/indicators/Settings.qml` — the indicator component. It reports
-  itself active so the gear sits in the always-visible block instead of
-  appearing only on hover, and launches the app on click.
-- `~/.config/omarchy/shell.json` — the `omarchy.indicators` entry lists
-  `"Settings"` alongside the default indicators.
-
-Because the shell only reads indicators from its own root-owned directory,
-`integration/install.sh` copies the component there with `sudo`:
-
-```sh
-~/.config/quickshell/omarchy-settings/integration/install.sh
-```
-
-That directory is replaced by `omarchy update`, so re-run the script after an
-update to bring the gear back. The `shell.json` entry is user config and
-survives updates. The shell rescans plugins on its own, but
-`omarchy-shell shell rescanPlugins` forces it.
-
 ## Design language
 
-Pulled from `qs.Commons.Style` and `qs.Commons.Color` so the app matches the
-active theme (Marvin by default):
+Pulled from `qs.Commons.Style` and `qs.Commons.Color` so the panel matches the
+active theme:
 
 - 24 px corner radius; background `#161616`, raised `#1e1e1e`, ink `#d6d6d6`,
   muted `#8c8c8c`, accent `#6db8ee`.
@@ -247,33 +226,33 @@ active theme (Marvin by default):
 ## Files
 
 ```
-shell.qml                     window, layout, keyboard, page loader
+manifest.json               plugin id, kinds (bar-widget + panel), entry points
+BarWidget.qml               the gear; toggles the panel through the shell
+SettingsPanel.qml           panel lifecycle: open/close + FloatingWindow
+SettingsApp.qml             the settings UI, host-agnostic
 model/
-  Schema.js                   the settings surface (pages + rows)
-  Lua.js                      managed map → hypr/settings.lua
-  SettingsStore.qml           live values, apply loop, state sidecar
-  Omarchy.qml                 everything that is not a Hyprland option
-  qmldir                      registers the two singletons
+  Schema.js                 the settings surface (pages + rows)
+  Lua.js                    managed map → hypr/settings.lua
+  SettingsStore.qml         live values, apply loop, state sidecar
+  Omarchy.qml               everything that is not a Hyprland option
+  qmldir                    registers the two singletons
 components/
-  Sidebar, NavItem            navigation + search
-  GenericPage, SettingRow     schema-driven rendering
+  Sidebar, NavItem          navigation + search
+  GenericPage, SettingRow   schema-driven rendering
   SwitchControl, SegmentedControl, ValueSlider, PillButton, SearchField
-  MonitorCanvas               draggable monitor arrangement
+  MonitorCanvas             draggable monitor arrangement
   PageHeader, StatusBar, SearchResults
 pages/
   DisplayPage, BarPage, IdlePage, NightlightPage, UpdatesPage, AboutPage
-integration/
-  indicators/Settings.qml     the omarchy.indicators gear
-  install.sh                  installs it into the shell (sudo)
-Ui/, Commons/                 symlinks to /usr/share/omarchy/shell/{Ui,Commons}
+install.sh                  copies into ~/.config/omarchy/plugins and enables
 ```
 
 ## Extending
 
 **Add a Hyprland setting:** add one entry to `Schema.settings`. Pick an existing
 `page` (or add a new page to `Schema.pages` and a `sourceFor` branch in
-`shell.qml` if it needs a custom body). No component changes are needed — the
-generic page, search, and Lua generator all read the schema.
+`SettingsApp.qml` if it needs a custom body). No component changes are needed —
+the generic page, search, and Lua generator all read the schema.
 
 **Add a custom page:** add it to `Schema.pages`, handle it in `sourceFor()`,
 and drop a `pages/<Name>Page.qml`. Use `SettingsStore` for Hyprland values and
@@ -292,6 +271,7 @@ and drop a `pages/<Name>Page.qml`. Use `SettingsStore` for Hyprland values and
 
 ## Requirements
 
-Quickshell 0.3.1+, the Omarchy CLI on `PATH`, and the Omarchy shell's `Ui/` and
-`Commons/` QML modules (the symlinks above). `fastfetch` is optional — the
-About page simply stays empty without it.
+An Omarchy build whose shell supports user plugins under
+`~/.config/omarchy/plugins` and the `omarchy plugin` CLI, plus the Omarchy CLI
+on `PATH`. `fastfetch` is optional — the About page simply stays empty without
+it.

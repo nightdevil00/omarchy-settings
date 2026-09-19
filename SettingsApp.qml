@@ -6,15 +6,14 @@ import "model"
 import "components"
 import "pages"
 
-FloatingWindow {
+// The settings UI itself, independent of where it is hosted. SettingsPanel.qml
+// puts this inside a FloatingWindow; a standalone harness can place it in any
+// window.
+Item {
   id: win
 
-  title: "Omarchy Settings"
-  visible: true
-  color: Color.background
-  implicitWidth: 1080
-  implicitHeight: 720
-  minimumSize: Qt.size(900, 580)
+  // Raised when the user asks to leave (Esc). The host decides what that means.
+  signal closeRequested()
 
   property string currentPage: "appearance"
   property string search: ""
@@ -37,6 +36,13 @@ FloatingWindow {
     if (next) next.forceActiveFocus()
   }
 
+  // Re-read live values and re-focus, called by the host each time it opens.
+  function activate() {
+    SettingsStore.refresh()
+    Omarchy.reload()
+    searchField.forceActiveFocus()
+  }
+
   Item {
     id: rootItem
     anchors.fill: parent
@@ -50,7 +56,7 @@ FloatingWindow {
       win.moveFocus(-1)
       event.accepted = true
     }
-    Keys.onEscapePressed: Qt.quit()
+    Keys.onEscapePressed: win.closeRequested()
 
     Row {
       anchors.fill: parent

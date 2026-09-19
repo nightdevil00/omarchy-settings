@@ -1,6 +1,2 @@
-# Absolute links into $OMARCHY_PATH/shell, created by setup.sh.
-/Ui
-/Commons
-
-# Quickshell logs, if ever written here.
+# Quickshell logs, if ever written into the plugin directory.
 *.qslog
