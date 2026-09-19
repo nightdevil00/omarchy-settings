@@ -1,0 +1,6 @@
+# Absolute links into $OMARCHY_PATH/shell, created by setup.sh.
+/Ui
+/Commons
+
+# Quickshell logs, if ever written here.
+*.qslog
