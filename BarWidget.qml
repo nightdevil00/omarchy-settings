@@ -25,13 +25,7 @@ BarWidget {
             cursorShape: Qt.PointingHandCursor
 
             onClicked: {
-                bar.run([
-                    "omarchy-shell",
-                    "shell",
-                    "toggle",
-                    "nightdevil00.omarchy-settings",
-                    "{}"
-                ])
+                bar.run("omarchy-shell shell toggle nightdevil00.omarchy-settings '{}'")
             }
 
             onEntered: {
