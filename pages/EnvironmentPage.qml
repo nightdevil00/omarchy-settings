@@ -110,18 +110,14 @@ Item {
         }
       }
 
-      Item {
-        id: settingsContainer
+      GenericPage {
+        id: innerGenericPage
         width: parent.width
         height: advancedMode ? innerGenericPage.contentHeight : 0
         visible: advancedMode
+        pageId: "environment"
+        embedded: true
         clip: true
-
-        GenericPage {
-          id: innerGenericPage
-          anchors.fill: parent
-          pageId: "environment"
-        }
       }
     }
   }
