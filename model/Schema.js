@@ -284,12 +284,12 @@ var settings = [
 
   { id: "gesture.workspace_swipe", page: "input", group: "Gestures",
     label: "Workspace swipe", desc: "Swipe with 3 or 4 fingers to change workspaces.",
-    type: "bool", hypr: null, lua: ["gesture", "workspace_swipe"],
+    type: "bool", hypr: null, lua: null,
     default: true },
 
   { id: "gesture.workspace_swipe_fingers", page: "input", group: "Gestures",
     label: "Swipe fingers", desc: "Number of fingers required for workspace swipe.",
-    type: "enum", hypr: null, lua: ["gesture", "workspace_swipe_fingers"],
+    type: "enum", hypr: null, lua: null,
     default: "3",
     options: [
       { value: "3", label: "3 fingers" },
@@ -298,7 +298,7 @@ var settings = [
 
   { id: "gesture.pinch_zoom", page: "input", group: "Gestures",
     label: "Pinch to zoom", desc: "Enable pinch gesture for cursor zoom.",
-    type: "bool", hypr: null, lua: ["gesture", "pinch_zoom"],
+    type: "bool", hypr: null, lua: null,
     default: true }
 ]
 
