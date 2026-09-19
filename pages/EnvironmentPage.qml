@@ -117,7 +117,6 @@ Item {
         visible: advancedMode
         pageId: "environment"
         embedded: true
-        clip: true
       }
     }
   }

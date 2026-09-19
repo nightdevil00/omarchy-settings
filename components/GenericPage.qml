@@ -14,10 +14,10 @@ Item {
   property bool embedded: false
 
   readonly property var groups: Schema.groupsForPage(pageId)
-  readonly property real contentHeight: contentCol.implicitHeight + (embedded ? 0 : 32)
 
+  // Standalone mode with Flickable for scrolling
   Item {
-    id: contentItem
+    id: standalone
     anchors.fill: parent
     visible: !embedded
 
@@ -25,13 +25,13 @@ Item {
       id: flick
       anchors.fill: parent
       contentWidth: width
-      contentHeight: contentCol.implicitHeight + 32
+      contentHeight: col.implicitHeight + 32
       clip: true
       boundsBehavior: Flickable.StopAtBounds
       ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
       Column {
-        id: contentCol
+        id: col
         width: flick.width
         spacing: 26
         bottomPadding: 24
@@ -70,6 +70,7 @@ Item {
     }
   }
 
+  // Embedded mode without Flickable (parent handles scrolling)
   Column {
     id: embeddedCol
     width: parent.width
@@ -108,4 +109,6 @@ Item {
       }
     }
   }
+
+  readonly property real contentHeight: embedded ? embeddedCol.implicitHeight : (standalone ? flick.contentHeight : 0)
 }
