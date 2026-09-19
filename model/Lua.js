@@ -104,6 +104,21 @@ function gestureLine(managed, schema) {
   return out
 }
 
+function kbOptionsString(managed) {
+  var has = function (id) { return Object.prototype.hasOwnProperty.call(managed, id) }
+  var capslock = has("input.capslock_behavior") ? managed["input.capslock_behavior"] : "compose"
+
+  var parts = ["shift:both_capslock_cancel", "grp:alts_toggle"]
+
+  if (capslock === "compose") parts.unshift("compose:caps")
+  else if (capslock === "ctrl") parts.unshift("ctrl:nocaps")
+  else if (capslock === "escape") parts.unshift("caps:escape")
+  else if (capslock === "normal") {} // no capslock option = normal behavior
+  else if (capslock === "none") parts.unshift("caps:none")
+
+  return parts.join(",")
+}
+
 // managed: { settingId: value }; monitors: [{output,enabled,mode,scale,x,y,transform}]
 function generate(managed, schema, monitors) {
   var config = {}
@@ -116,6 +131,14 @@ function generate(managed, schema, monitors) {
     var value = managed[s.id]
 
     if (s.leaf) continue
+
+    // Special handling for kb_options - it's a composite
+    if (s.id === "input.capslock_behavior") {
+      var kbOpts = kbOptionsString(managed)
+      setPath(config, s.lua, quote(kbOpts))
+      hasConfig = true
+      continue
+    }
 
     if (s.lua) {
       setPath(config, s.lua, scalar(value, s.type))

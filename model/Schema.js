@@ -209,6 +209,18 @@ var settings = [
     type: "bool", hypr: "input:numlock_by_default", lua: ["input", "numlock_by_default"],
     default: true },
 
+  { id: "input.capslock_behavior", page: "input", group: "Keyboard",
+    label: "CapsLock behavior", desc: "What the CapsLock key does.",
+    type: "enum", hypr: "input:kb_options", lua: ["input", "kb_options"],
+    default: "compose",
+    options: [
+      { value: "compose", label: "Compose key (default)" },
+      { value: "normal", label: "Normal CapsLock" },
+      { value: "ctrl", label: "Control key" },
+      { value: "escape", label: "Escape key" },
+      { value: "none", label: "Disabled" }
+    ] },
+
   { id: "input.accel_profile", page: "input", group: "Pointer",
     label: "Acceleration profile", desc: "Adaptive accelerates with speed; flat is linear.",
     type: "enum", hypr: "input:accel_profile", lua: ["input", "accel_profile"],
