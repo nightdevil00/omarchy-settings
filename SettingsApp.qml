@@ -18,7 +18,7 @@ Item {
   property string currentPage: "appearance"
   property string search: ""
 
-  readonly property var genericPages: ["appearance", "window", "motion", "input"]
+  readonly property var genericPages: ["appearance", "window", "motion", "input", "environment"]
 
   function isGeneric(id) {
     return genericPages.indexOf(id) !== -1
