@@ -10,11 +10,17 @@ import "."
 // Motion, and Input.
 Item {
   id: root
+
   property string pageId: ""
   property bool embedded: false
 
   readonly property var groups: Schema.groupsForPage(pageId)
-  readonly property real contentHeight: embedded ? embeddedContent.implicitHeight : 0
+
+  readonly property real contentHeight: embedded
+      ? embeddedContent.implicitHeight
+      : (flick ? flick.contentHeight : 0)
+
+  implicitHeight: contentHeight
 
   // Embedded mode: Column directly in root, parent handles scrolling
   Column {
