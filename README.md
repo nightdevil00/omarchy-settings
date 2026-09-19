@@ -13,6 +13,16 @@ change, and needs no root to install.
 bar gear ──► omarchy-shell shell toggle nightdevil00.omarchy-settings '{}' ──► panel
 ```
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Appearance](screenshots/appearance.png) | ![Window](screenshots/window.png) |
+| ![Motion](screenshots/motion.png) | ![Input](screenshots/input.png) |
+| ![Display](screenshots/display.png) | ![Bar & Plugins](screenshots/bar&plugins.png) |
+| ![Idle & Lock](screenshots/idle.png) | ![Night Light](screenshots/night_light.png) |
+| ![Updates](screenshots/updates.png) | ![About](screenshots/about.png) |
+
 ## Install
 
 With the Omarchy CLI (recommended):
