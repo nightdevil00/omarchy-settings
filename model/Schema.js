@@ -268,7 +268,36 @@ var settings = [
   { id: "input.touchpad.scroll_factor", page: "input", group: "Touchpad",
     label: "Scroll factor", desc: "Touchpad scroll speed multiplier.",
     type: "float", hypr: "input:touchpad:scroll_factor", lua: ["input", "touchpad", "scroll_factor"],
-    default: 0.4, min: 0, max: 2, step: 0.05 }
+    default: 0.4, min: 0, max: 2, step: 0.05 },
+
+  { id: "gesture.workspace_swipe", page: "input", group: "Gestures",
+    label: "Workspace swipe", desc: "Swipe with 3 or 4 fingers to change workspaces.",
+    type: "bool", hypr: "gesture:workspace_swipe", lua: ["gesture", "workspace_swipe"],
+    default: true },
+
+  { id: "gesture.workspace_swipe_fingers", page: "input", group: "Gestures",
+    label: "Swipe fingers", desc: "Number of fingers required for workspace swipe.",
+    type: "enum", hypr: "gesture:workspace_swipe_fingers", lua: ["gesture", "workspace_swipe_fingers"],
+    default: "3",
+    options: [
+      { value: "3", label: "3 fingers" },
+      { value: "4", label: "4 fingers" }
+    ] },
+
+  { id: "gesture.workspace_swipe_invert", page: "input", group: "Gestures",
+    label: "Invert direction", desc: "Reverse the swipe direction for workspace switching.",
+    type: "bool", hypr: "gesture:workspace_swipe_invert", lua: ["gesture", "workspace_swipe_invert"],
+    default: false },
+
+  { id: "gesture.workspace_swipe_distance", page: "input", group: "Gestures",
+    label: "Swipe distance", desc: "Minimum swipe distance to trigger workspace change.",
+    type: "int", hypr: "gesture:workspace_swipe_distance", lua: ["gesture", "workspace_swipe_distance"],
+    default: 300, min: 100, max: 1000, step: 50, unit: "px" },
+
+  { id: "gesture.pinch", page: "input", group: "Gestures",
+    label: "Pinch to zoom", desc: "Enable pinch gesture for zooming.",
+    type: "bool", hypr: "gesture:pinch", lua: ["gesture", "pinch"],
+    default: true }
 ]
 
 function pageById(id) {
