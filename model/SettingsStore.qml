@@ -199,6 +199,7 @@ Item {
     }
     loaded = true
     refresh()
+    if (managedCount() > 0 || managedMonitors.length > 0) scheduleApply()
   }
 
   // ------------------------------------------------------------- apply loop
