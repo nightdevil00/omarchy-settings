@@ -221,6 +221,10 @@ Item {
         var removed = Lua.removeRequire(current)
         if (removed.changed) hyprlandFile.setText(removed.text)
       }
+    } else {
+      var current = ""
+      var ensured = Lua.ensureRequire(current)
+      if (ensured.changed) hyprlandFile.setText(ensured.text)
     }
 
     stateWriteFile.setText(JSON.stringify({ managed: root.managed, monitors: root.managedMonitors }, null, 2))
