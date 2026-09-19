@@ -35,7 +35,7 @@ var pages = [
   { id: "idle",       label: "Idle & Lock",   icon: "󱄄", desc: "Screensaver and lock timing." },
   { id: "nightlight", label: "Night Light",   icon: "󰔎", desc: "Warm the screen after dark." },
   { id: "updates",    label: "Updates",       icon: "", desc: "Channel, availability, and the update actions." },
-  { id: "about",      label: "About",         icon: "", desc: "Version, health, and ways back." }
+  { id: "about",      label: "About",         icon: "\uF02D", desc: "Version, health, and ways back." }
 ]
 
 var settings = [
