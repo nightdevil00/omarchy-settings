@@ -199,6 +199,7 @@ Item {
     }
     loaded = true
     refresh()
+    refreshEnvironment()
     if (managedCount() > 0 || managedMonitors.length > 0) scheduleApply()
   }
 
@@ -266,6 +267,33 @@ Item {
     onExited: root.parseEffective(getOut.text)
   }
 
+  // ------------------------------------------------------- env vars read
+
+  property var envSettingIds: []
+
+  function buildEnvSettingIds() {
+    var out = []
+    for (var i = 0; i < root.schema.length; i++) {
+      var s = root.schema[i]
+      if (s.id && s.id.startsWith("env.") && s.lua && s.lua.length >= 2 && s.lua[0] === "env") {
+        out.push({ id: s.id, key: s.lua[1] })
+      }
+    }
+    envSettingIds = out
+  }
+
+  function readEnvironmentVariables() {
+    var result = {}
+    for (var i = 0; i < envSettingIds.length; i++) {
+      var entry = envSettingIds[i]
+      var val = Quickshell.env(entry.key)
+      if (val !== null && val !== undefined && val.length > 0) {
+        result[entry.id] = val
+      }
+    }
+    return result
+  }
+
   property var optionToId: ({})
 
   function buildOptionMap() {
@@ -283,6 +311,7 @@ Item {
 
   function refresh() {
     if (Object.keys(optionToId).length === 0) buildOptionMap()
+    if (envSettingIds.length === 0) buildEnvSettingIds()
     var opts = Schema.hyprOptions()
     var script = ""
     for (var i = 0; i < opts.length; i++) {
@@ -290,6 +319,22 @@ Item {
     }
     getProc.command = ["bash", "-c", script]
     getProc.running = true
+  }
+
+  function refreshEnvironment() {
+    if (envSettingIds.length === 0) buildEnvSettingIds()
+    var envResult = readEnvironmentVariables()
+    var updated = false
+    var keys = Object.keys(envResult)
+    for (var i = 0; i < keys.length; i++) {
+      var id = keys[i]
+      var val = envResult[id]
+      if (!Object.prototype.hasOwnProperty.call(effective, id) || effective[id] !== val) {
+        effective[id] = val
+        updated = true
+      }
+    }
+    if (updated && !applying) status = "Ready"
   }
 
   function parseEffective(text) {
@@ -308,12 +353,19 @@ Item {
       else if (obj.hasOwnProperty("float")) result[id] = obj.float
       else if (obj.hasOwnProperty("str")) result[id] = obj.str
       else if (obj.hasOwnProperty("css")) {
-        // Options like general:gaps_in are vec4 and answer only with a css
-        // string ("2 2 2 2"). The schema treats them as scalars, so read the
-        // first component; anything non-numeric stays a string.
         var raw = String(obj.css).trim()
         var n = parseFloat(raw)
         result[id] = isNaN(n) ? raw : n
+      }
+    }
+
+    // Merge environment variables
+    var envResult = readEnvironmentVariables()
+    var envKeys = Object.keys(envResult)
+    for (var i = 0; i < envKeys.length; i++) {
+      var id = envKeys[i]
+      if (!Object.prototype.hasOwnProperty.call(managed, id)) {
+        result[id] = envResult[id]
       }
     }
 
@@ -330,6 +382,7 @@ Item {
 
   Component.onCompleted: {
     buildOptionMap()
+    buildEnvSettingIds()
     stateFile.reload()
   }
 }

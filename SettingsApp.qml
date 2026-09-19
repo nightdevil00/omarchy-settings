@@ -18,7 +18,7 @@ Item {
   property string currentPage: "appearance"
   property string search: ""
 
-  readonly property var genericPages: ["appearance", "window", "motion", "input", "environment"]
+  readonly property var genericPages: ["appearance", "window", "motion", "input"]
 
   function isGeneric(id) {
     return genericPages.indexOf(id) !== -1
@@ -149,6 +149,7 @@ Item {
 
   function sourceFor(id) {
     if (id === "display") return "pages/DisplayPage.qml"
+    if (id === "environment") return "pages/EnvironmentPage.qml"
     if (id === "bar") return "pages/BarPage.qml"
     if (id === "idle") return "pages/IdlePage.qml"
     if (id === "nightlight") return "pages/NightlightPage.qml"

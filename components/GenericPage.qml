@@ -13,6 +13,7 @@ Item {
   property string pageId: ""
 
   readonly property var groups: Schema.groupsForPage(pageId)
+  readonly property real contentHeight: flick.contentHeight
 
   Flickable {
     id: flick
