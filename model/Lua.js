@@ -84,6 +84,22 @@ function monitorLine(m) {
   return "hl.monitor({ " + parts.join(", ") + " })\n"
 }
 
+function gestureLine(managed) {
+  var out = ""
+  var has = function (id) { return Object.prototype.hasOwnProperty.call(managed, id) }
+
+  if (has("gesture.workspace_swipe") && managed["gesture.workspace_swipe"] === true) {
+    var fingers = has("gesture.workspace_swipe_fingers") ? Number(managed["gesture.workspace_swipe_fingers"]) : 3
+    out += "hl.gesture({ fingers = " + fingers + ", direction = \"horizontal\", action = \"workspace\" })\n"
+  }
+
+  if (has("gesture.pinch_zoom") && managed["gesture.pinch_zoom"] === true) {
+    out += "hl.gesture({ fingers = 2, direction = \"pinch\", action = \"cursor_zoom\", zoom_level = 1.5, mode = \"mult\" })\n"
+  }
+
+  return out
+}
+
 // managed: { settingId: value }; monitors: [{output,enabled,mode,scale,x,y,transform}]
 function generate(managed, schema, monitors) {
   var config = {}
@@ -119,6 +135,8 @@ function generate(managed, schema, monitors) {
     anims += animationLine("workspaces", { enabled: true, speed: sp, bezier: "default", style: sstyle })
   }
 
+  var gestureText = gestureLine(managed)
+
   var monitorText = ""
   var list = monitors || []
   for (var mi = 0; mi < list.length; mi++) monitorText += monitorLine(list[mi])
@@ -134,10 +152,13 @@ function generate(managed, schema, monitors) {
   if (anims.length > 0) {
     out += "-- Motion overrides\n" + anims + "\n"
   }
+  if (gestureText.length > 0) {
+    out += "-- Gestures\n" + gestureText + "\n"
+  }
   if (monitorText.length > 0) {
     out += "-- Monitor layout\n" + monitorText
   }
-  if (!hasConfig && anims.length === 0 && monitorText.length === 0) {
+  if (!hasConfig && anims.length === 0 && gestureText.length === 0 && monitorText.length === 0) {
     out += "-- No settings are currently managed.\n"
   }
   return out
