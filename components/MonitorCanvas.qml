@@ -47,6 +47,7 @@ Item {
 
   readonly property var entries: {
     var dep = canvas.managedMonitors
+    var dep2 = canvas.monitors
     return buildEntries()
   }
 
@@ -59,6 +60,7 @@ Item {
 
   readonly property var frame: {
     var dep = canvas.managedMonitors
+    var dep2 = canvas.monitors
     return computeFrame()
   }
 
