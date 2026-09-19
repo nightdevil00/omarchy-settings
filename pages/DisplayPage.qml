@@ -125,17 +125,26 @@ Item {
                 }
               }
 
-              Button {
+              Rectangle {
                 id: expandBtn
                 width: 32
                 height: 26
                 anchors.verticalCenter: parent.verticalCenter
-                flat: true
-                text: card.expanded ? "▲" : "▼"
-                font.family: Style.font.family
-                font.pixelSize: Style.font.bodySmall
-                color: Color.muted
-                onClicked: card.expanded = !card.expanded
+                radius: 4
+                color: "transparent"
+                Text {
+                  anchors.centerIn: parent
+                  text: card.expanded ? "▲" : "▼"
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.bodySmall
+                  color: Color.muted
+                }
+                MouseArea {
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: card.expanded = !card.expanded
+                }
               }
 
               Rectangle {

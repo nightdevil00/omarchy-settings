@@ -104,6 +104,10 @@ function gestureLine(managed, schema) {
   return out
 }
 
+function envLine(key, value) {
+  return "hl.env({ " + quote(key) + ", " + quote(String(value)) + " })\n"
+}
+
 function deviceInputLine(managed, schema, deviceType, deviceNames) {
   var out = ""
   var has = function (id) { return Object.prototype.hasOwnProperty.call(managed, id) }
@@ -159,6 +163,8 @@ function generate(managed, schema, monitors) {
   var config = {}
   var anims = ""
   var hasConfig = false
+  var envText = ""
+  var hasEnv = false
 
   for (var i = 0; i < schema.length; i++) {
     var s = schema[i]
@@ -178,6 +184,13 @@ function generate(managed, schema, monitors) {
     if (s.lua) {
       setPath(config, s.lua, scalar(value, s.type))
       hasConfig = true
+    }
+
+    // Environment variables use hl.env()
+    if (s.id && s.id.startsWith("env.") && s.lua && s.lua.length >= 2 && s.lua[0] === "env") {
+      var envKey = s.lua[1]
+      envText += envLine(envKey, value)
+      hasEnv = true
     }
   }
 
@@ -265,10 +278,13 @@ function generate(managed, schema, monitors) {
   if (gestureText.length > 0) {
     out += "-- Gestures\n" + gestureText + "\n"
   }
+  if (hasEnv) {
+    out += "-- Environment variables\n" + envText + "\n"
+  }
   if (monitorText.length > 0) {
     out += "-- Monitor layout\n" + monitorText
   }
-  if (!hasConfig && anims.length === 0 && gestureText.length === 0 && monitorText.length === 0 && Object.keys(deviceConfig).length === 0) {
+  if (!hasConfig && anims.length === 0 && gestureText.length === 0 && monitorText.length === 0 && Object.keys(deviceConfig).length === 0 && !hasEnv) {
     out += "-- No settings are currently managed.\n"
   }
   return out
