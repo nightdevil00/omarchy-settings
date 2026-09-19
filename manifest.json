@@ -7,12 +7,10 @@
   "license": "MIT",
   "description": "A graphical settings hub for Omarchy: Hyprland behaviour and monitors, the shell bar and plugins, idle and night light, updates, and a system summary. Opens as a shell panel from a bar gear.",
   "kinds": [
-    "bar-widget",
     "panel"
   ],
   "keepLoaded": true,
   "entryPoints": {
-    "barWidget": "BarWidget.qml",
     "panel": "SettingsPanel.qml"
   },
   "barWidget": {
