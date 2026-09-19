@@ -302,6 +302,14 @@ Item {
       else if (obj.hasOwnProperty("int")) result[id] = obj.int
       else if (obj.hasOwnProperty("float")) result[id] = obj.float
       else if (obj.hasOwnProperty("str")) result[id] = obj.str
+      else if (obj.hasOwnProperty("css")) {
+        // Options like general:gaps_in are vec4 and answer only with a css
+        // string ("2 2 2 2"). The schema treats them as scalars, so read the
+        // first component; anything non-numeric stays a string.
+        var raw = String(obj.css).trim()
+        var n = parseFloat(raw)
+        result[id] = isNaN(n) ? raw : n
+      }
     }
 
     // App-only settings never appear from hyprctl; fall back to default.
