@@ -14,65 +14,11 @@ Item {
   property bool embedded: false
 
   readonly property var groups: Schema.groupsForPage(pageId)
+  readonly property real contentHeight: embedded ? embeddedContent.implicitHeight : 0
 
-  // Standalone mode with Flickable for scrolling
-  Item {
-    id: standalone
-    anchors.fill: parent
-    visible: !embedded
-
-    Flickable {
-      id: flick
-      anchors.fill: parent
-      contentWidth: width
-      contentHeight: col.implicitHeight + 32
-      clip: true
-      boundsBehavior: Flickable.StopAtBounds
-      ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-
-      Column {
-        id: col
-        width: flick.width
-        spacing: 26
-        bottomPadding: 24
-
-        Repeater {
-          model: root.groups
-          delegate: Column {
-            id: groupCol
-            required property var modelData
-            width: col.width
-            spacing: 2
-
-            Text {
-              text: groupCol.modelData.name.length > 0 ? groupCol.modelData.name.toUpperCase() : ""
-              visible: text.length > 0
-              leftPadding: 2
-              bottomPadding: 6
-              font.family: Style.font.family
-              font.pixelSize: Style.font.caption
-              font.letterSpacing: 1.2
-              color: Color.muted
-            }
-
-            Repeater {
-              model: groupCol.modelData.items
-              delegate: SettingRow {
-                required property var modelData
-                width: groupCol.width
-                setting: modelData
-                onChanged: function (v) { SettingsStore.set(modelData.id, v) }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Embedded mode without Flickable (parent handles scrolling)
+  // Embedded mode: Column directly in root, parent handles scrolling
   Column {
-    id: embeddedCol
+    id: embeddedContent
     width: parent.width
     spacing: 26
     bottomPadding: 24
@@ -81,13 +27,12 @@ Item {
     Repeater {
       model: root.groups
       delegate: Column {
-        id: groupCol
         required property var modelData
-        width: embeddedCol.width
+        width: embeddedContent.width
         spacing: 2
 
         Text {
-          text: groupCol.modelData.name.length > 0 ? groupCol.modelData.name.toUpperCase() : ""
+          text: modelData.name.length > 0 ? modelData.name.toUpperCase() : ""
           visible: text.length > 0
           leftPadding: 2
           bottomPadding: 6
@@ -98,10 +43,10 @@ Item {
         }
 
         Repeater {
-          model: groupCol.modelData.items
+          model: modelData.items
           delegate: SettingRow {
             required property var modelData
-            width: groupCol.width
+            width: parent.width
             setting: modelData
             onChanged: function (v) { SettingsStore.set(modelData.id, v) }
           }
@@ -110,5 +55,52 @@ Item {
     }
   }
 
-  readonly property real contentHeight: embedded ? embeddedCol.implicitHeight : (standalone ? flick.contentHeight : 0)
+  // Standalone mode: Flickable fills parent, content scrolls inside
+  Flickable {
+    id: flick
+    anchors.fill: parent
+    contentWidth: width
+    contentHeight: col.implicitHeight + 32
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
+    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+    visible: !embedded
+
+    Column {
+      id: col
+      width: flick.width
+      spacing: 26
+      bottomPadding: 24
+
+      Repeater {
+        model: root.groups
+        delegate: Column {
+          required property var modelData
+          width: col.width
+          spacing: 2
+
+          Text {
+            text: modelData.name.length > 0 ? modelData.name.toUpperCase() : ""
+            visible: text.length > 0
+            leftPadding: 2
+            bottomPadding: 6
+            font.family: Style.font.family
+            font.pixelSize: Style.font.caption
+            font.letterSpacing: 1.2
+            color: Color.muted
+          }
+
+          Repeater {
+            model: modelData.items
+            delegate: SettingRow {
+              required property var modelData
+              width: parent.width
+              setting: modelData
+              onChanged: function (v) { SettingsStore.set(modelData.id, v) }
+            }
+          }
+        }
+      }
+    }
+  }
 }
