@@ -65,23 +65,29 @@ Item {
   }
 
   // Scale is derived from the summed sizes of active monitors so the surface
-  // never rescales while dragging -- only the rectangles move.
+  // never rescales while dragging -- only the rectangles move. Coordinates are
+  // offset so monitors with negative or far-from-origin positions stay in view.
   function computeFrame() {
     var list = canvas.entries
     var sumW = 0, sumH = 0
+    var minX = Infinity, minY = Infinity
     for (var i = 0; i < list.length; i++) {
       if (!list[i].enabled) continue
       sumW += list[i].w
       sumH += list[i].h
+      minX = Math.min(minX, list[i].x)
+      minY = Math.min(minY, list[i].y)
     }
+    if (minX === Infinity) minX = 0
+    if (minY === Infinity) minY = 0
     var availW = Math.max(1, canvas.width - canvas.pad * 2)
     var availH = Math.max(1, canvas.implicitHeight - canvas.pad * 2)
     if (sumW <= 0 || sumH <= 0)
-      return { fit: 1, ox: canvas.pad, oy: canvas.pad, availW: availW, availH: availH }
+      return { fit: 1, ox: canvas.pad, oy: canvas.pad, bx: 0, by: 0, availW: availW, availH: availH }
     var fit = Math.min(availW / (sumW * 1.15), availH / (sumH * 1.15), canvas.maxFit)
     var ox = canvas.pad + (availW - sumW * fit) / 2
     var oy = canvas.pad + (availH - sumH * fit) / 2
-    return { fit: fit, ox: ox, oy: oy, availW: availW, availH: availH }
+    return { fit: fit, ox: ox, oy: oy, bx: minX, by: minY, availW: availW, availH: availH }
   }
 
   function edgesX(self) {
@@ -167,8 +173,8 @@ Item {
         readonly property real wy: held ? canvas.previewY : (entry ? entry.y : 0)
 
         visible: active
-        x: canvas.frame.ox + wx * canvas.frame.fit
-        y: canvas.frame.oy + wy * canvas.frame.fit
+        x: canvas.frame.ox + (wx - canvas.frame.bx) * canvas.frame.fit
+        y: canvas.frame.oy + (wy - canvas.frame.by) * canvas.frame.fit
         width: Math.max(24, (entry ? entry.w : 0) * canvas.frame.fit)
         height: Math.max(18, (entry ? entry.h : 0) * canvas.frame.fit)
         radius: 8

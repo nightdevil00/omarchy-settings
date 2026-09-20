@@ -69,6 +69,10 @@ Item {
   // ---------------------------------------------------------------- mutate
 
   function set(id, v) {
+    if (!root.loaded) {
+      console.warn("[settings] set " + id + " ignored: state not loaded yet")
+      return
+    }
     var next = {}
     var keys = Object.keys(managed)
     for (var i = 0; i < keys.length; i++) next[keys[i]] = managed[keys[i]]
@@ -78,7 +82,7 @@ Item {
   }
 
   function reset(id) {
-    if (!isManaged(id)) return
+    if (!root.loaded || !isManaged(id)) return
     var next = {}
     var keys = Object.keys(managed)
     for (var i = 0; i < keys.length; i++) {
@@ -94,6 +98,7 @@ Item {
   }
 
   function resetAll() {
+    if (!root.loaded) return
     if (managedCount() === 0 && managedMonitors.length === 0) return
     managed = ({})
     managedMonitors = []
@@ -120,6 +125,7 @@ Item {
   }
 
   function setMonitor(output, changes) {
+    if (!root.loaded) return
     var next = []
     var found = null
     for (var i = 0; i < managedMonitors.length; i++) {
@@ -135,6 +141,7 @@ Item {
   }
 
   function resetMonitor(output) {
+    if (!root.loaded) return
     var next = []
     for (var i = 0; i < managedMonitors.length; i++)
       if (managedMonitors[i].output !== output) next.push(managedMonitors[i])
@@ -153,7 +160,7 @@ Item {
   FileView {
     id: stateFile
     path: root.statePath
-    preload: false
+    preload: true
     watchChanges: false
     onLoaded: root.adoptState(stateFile.text())
     onLoadFailed: {
@@ -161,6 +168,14 @@ Item {
       root.loaded = true
       root.refresh()
     }
+  }
+
+  FileView {
+    id: stateBackupFile
+    path: root.statePath + ".bak"
+    preload: false
+    watchChanges: false
+    atomicWrites: true
   }
 
   FileView {
@@ -213,6 +228,10 @@ Item {
 
   function writeAndApply() {
     luaFile.setText(Lua.generate(root.managed, root.schema, root.managedMonitors))
+
+    if (stateFile.loaded && stateFile.text().length > 0) {
+      stateBackupFile.setText(stateFile.text())
+    }
 
     if (hyprlandFile.loaded) {
       var current = hyprlandFile.text()
@@ -383,6 +402,10 @@ Item {
   Component.onCompleted: {
     buildOptionMap()
     buildEnvSettingIds()
-    stateFile.reload()
+    // preload:true already loads when path resolves; this retry covers a
+    // transient failure so the state is never adopted empty on first open.
+    Qt.callLater(function() {
+      if (!stateFile.loaded && !root.loaded) stateFile.reload()
+    })
   }
 }

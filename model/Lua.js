@@ -141,6 +141,13 @@ function generate(managed, schema, monitors) {
 
     if (s.leaf) continue
 
+    // Settings with no Hyprland keyword (hypr: null) are recorded in state
+    // but must not be written into the hl.config tree -- the Omarchy loader
+    // relays every tree key to Hyprland, which rejects them at parse time
+    // ("unknown config key 'input.touchpad.accel_profile'"). env.* settings
+    // are emitted separately via hl.env() and gestures via hl.gesture().
+    if (s.hypr === null) continue
+
     // Special handling for kb_options - it's a composite
     if (s.id === "input.capslock_behavior") {
       var kbOpts = kbOptionsString(managed)
