@@ -7,10 +7,13 @@
 // user's own files. It only ever contains values the user changed; removing
 // a setting from the map removes the line, letting the original value apply.
 
+function roundFloat(value) {
+  return Math.round(value * 1e6) / 1e6
+}
+
 function luaNumberString(value) {
   if (typeof value === "number") {
-    if (value === Math.floor(value)) return String(value)
-    return String(value)
+    return value === Math.floor(value) ? String(value) : String(roundFloat(value))
   }
   return null
 }
@@ -28,10 +31,10 @@ function scalar(value, type) {
   if (type === "bool") return value ? "true" : "false"
   if (type === "int" || type === "float") {
     var n = Number(value)
-    return isNaN(n) ? "0" : (n === Math.floor(n) ? String(n) : String(n))
+    return isNaN(n) ? "0" : (n === Math.floor(n) ? String(n) : String(roundFloat(n)))
   }
   // enums and strings: numeric-looking enum members stay numeric
-  if (typeof value === "number") return String(value)
+  if (typeof value === "number") return String(roundFloat(value))
   return needsQuotes(value) ? quote(value) : String(value)
 }
 
@@ -108,41 +111,6 @@ function envLine(key, value) {
   return "hl.env({ " + quote(key) + ", " + quote(String(value)) + " })\n"
 }
 
-function deviceInputLine(managed, schema, deviceType, deviceNames) {
-  var out = ""
-  var has = function (id) { return Object.prototype.hasOwnProperty.call(managed, id) }
-  var prefix = "input." + deviceType + "."
-  var deviceBlock = false
-  var deviceConfig = {}
-
-  for (var i = 0; i < schema.length; i++) {
-    var s = schema[i]
-    if (!s.id.startsWith(prefix)) continue
-    if (!Object.prototype.hasOwnProperty.call(managed, s.id)) continue
-
-    var key = s.id.substring(prefix.length)
-    var value = managed[s.id]
-    if (s.type === "bool") deviceConfig[key] = value ? "true" : "false"
-    else if (s.type === "float" || s.type === "int") deviceConfig[key] = Number(value) === Math.floor(Number(value)) ? String(Number(value)) : String(Number(value))
-    else deviceConfig[key] = quote(String(value))
-    deviceBlock = true
-  }
-
-  if (!deviceBlock) return ""
-
-  // Generate device-specific config using hyprctl keyword syntax
-  for (var d = 0; d < deviceNames.length; d++) {
-    var name = deviceNames[d]
-    out += "hyprctl keyword device[" + quote(name) + "]:{\n"
-    var keys = Object.keys(deviceConfig)
-    for (var k = 0; k < keys.length; k++) {
-      out += "  " + keys[k] + " = " + deviceConfig[keys[k]] + ",\n"
-    }
-    out += "}\n"
-  }
-  return out
-}
-
 function kbOptionsString(managed) {
   var has = function (id) { return Object.prototype.hasOwnProperty.call(managed, id) }
   var capslock = has("input.capslock_behavior") ? managed["input.capslock_behavior"] : "compose"
@@ -212,27 +180,6 @@ function generate(managed, schema, monitors) {
 
   var gestureText = gestureLine(managed, schema)
 
-  // Device-specific input configs (mouse, touchpad, trackpoint)
-  var deviceConfig = {}
-  var deviceTypes = ["mouse", "touchpad", "trackpoint"]
-  for (var dt = 0; dt < deviceTypes.length; dt++) {
-    var prefix = "input." + deviceTypes[dt] + "."
-    var devConf = {}
-    var hasDev = false
-    for (var i = 0; i < schema.length; i++) {
-      var s = schema[i]
-      if (!s.id.startsWith(prefix)) continue
-      if (!Object.prototype.hasOwnProperty.call(managed, s.id)) continue
-      var key = s.id.substring(prefix.length)
-      var value = managed[s.id]
-      if (s.type === "bool") devConf[key] = value
-      else if (s.type === "float" || s.type === "int") devConf[key] = Number(value)
-      else devConf[key] = String(value)
-      hasDev = true
-    }
-    if (hasDev) deviceConfig[deviceTypes[dt]] = devConf
-  }
-
   var monitorText = ""
   var list = monitors || []
   for (var mi = 0; mi < list.length; mi++) monitorText += monitorLine(list[mi])
@@ -244,32 +191,6 @@ function generate(managed, schema, monitors) {
 
   if (hasConfig) {
     out += "hl.config({\n" + renderTable(config, "") + "})\n\n"
-  }
-
-  // Device-specific input configs
-  if (Object.keys(deviceConfig).length > 0) {
-    out += "-- Device-specific input\n"
-    out += "hl.config({\n"
-    out += "  device = {\n"
-    var devTypes = Object.keys(deviceConfig)
-    for (var di = 0; di < devTypes.length; di++) {
-      var dtype = devTypes[di]
-      var dconf = deviceConfig[dtype]
-      // Note: device names should be updated to match your hardware
-      out += "    -- " + dtype + " devices\n"
-      out += "    -- [\"device-name\"] = {\n"
-      var keys = Object.keys(dconf)
-      for (var k = 0; k < keys.length; k++) {
-        var val = dconf[keys[k]]
-        if (typeof val === "boolean") val = val ? "true" : "false"
-        else if (typeof val === "number") val = String(val)
-        else val = quote(String(val))
-        out += "      " + keys[k] + " = " + val + ",\n"
-      }
-      out += "    },\n"
-    }
-    out += "  }\n"
-    out += "})\n\n"
   }
 
   if (anims.length > 0) {
@@ -284,7 +205,7 @@ function generate(managed, schema, monitors) {
   if (monitorText.length > 0) {
     out += "-- Monitor layout\n" + monitorText
   }
-  if (!hasConfig && anims.length === 0 && gestureText.length === 0 && monitorText.length === 0 && Object.keys(deviceConfig).length === 0 && !hasEnv) {
+  if (!hasConfig && anims.length === 0 && gestureText.length === 0 && monitorText.length === 0 && !hasEnv) {
     out += "-- No settings are currently managed.\n"
   }
   return out
